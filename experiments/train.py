@@ -20,7 +20,7 @@ from apnet.layers import PrototypeLayer, WeightedSum
 from dcase_models.data.data_generator import DataGenerator
 from dcase_models.data.scaler import Scaler
 from dcase_models.util.files import load_json
-from dcase_models.util.files import mkdir_if_not_exists, save_pickle
+from dcase_models.util.files import mkdir_if_not_exists, save_pickle, load_pickle
 from dcase_models.util.data import evaluation_setup
 
 
@@ -140,7 +140,7 @@ def main():
     )
 
     if model_name == 'APNet':
-        outputs = ['annotations', features, 'zeros']
+        outputs = ['annotations', features, 'zeros', 'zeros']
     else:
         outputs = 'annotations'
         
@@ -182,21 +182,24 @@ def main():
     #             data_gen_train.audio_file_list.extend(files_by_class[class_ix][:new_instances])
     # print(len(data_gen_train.audio_file_list))
 
+    if False:
+        scaler = Scaler(normalizer=params_model['normalizer'])
 
-    scaler = Scaler(normalizer=params_model['normalizer'])
+        print('Fitting scaler ...')
+        if args.model in ['MLP', 'SB_CNN', 'AttRNNSpeechModel']:
+            scaler_outputs = None
+        else:
+            scaler_outputs = Scaler(normalizer=[None, params_model['normalizer'], None])
+            scaler_outputs.fit(data_gen_train, inputs=False)
+            data_gen_train.set_scaler_outputs(scaler_outputs)
 
-    print('Fitting scaler ...')
-    if args.model in ['MLP', 'SB_CNN', 'AttRNNSpeechModel']:
-        scaler_outputs = None
+        scaler.fit(data_gen_train)
+        data_gen_train.set_scaler(scaler)
+        print('Done!')
     else:
-        scaler_outputs = Scaler(normalizer=[None, params_model['normalizer'], None])
-        scaler_outputs.fit(data_gen_train, inputs=False)
-        data_gen_train.set_scaler_outputs(scaler_outputs)
-
-    scaler.fit(data_gen_train)
-    data_gen_train.set_scaler(scaler)
-    print('Done!')
-
+        exp_folder = os.path.join(model_folder, args.fold_name)
+        scaler = load_pickle(os.path.join(exp_folder, 'scaler.pickle'))
+        data_gen_train.set_scaler(scaler)
     # Pass scaler to data_gen_train to be used when data
     # loading
 
@@ -248,7 +251,7 @@ def main():
                 metrics=metrics,
                 **params_model['model_arguments']
             )
-        model_container.save_model_json(exp_folder)
+        #model_container.save_model_json(exp_folder)
 
     model_container.model.summary()
 

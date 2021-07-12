@@ -17,8 +17,17 @@ import keras.backend as K
 from dcase_models.model.container import KerasModelContainer
 
 from .losses import prototype_loss
+from .losses import separate_loss as separate_loss
 from .prototypes import Prototypes, DataInstances
 from .layers import PrototypeLayer, WeightedSum
+
+debug=False
+if debug:
+    from tensorflow.python import debug as tf_debug
+    sess = K.get_session()
+    sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+    K.set_session(sess)
+
 
 
 class APNet(KerasModelContainer):
@@ -91,7 +100,7 @@ class APNet(KerasModelContainer):
 
         latent_features = Lambda(lambda x: x, name='features')(latent_features)
 
-        distances = PrototypeLayer(
+        distances, kernels = PrototypeLayer(
             self.n_prototypes,
             distance=self.distance,
             name='prototype_distances',
@@ -120,10 +129,9 @@ class APNet(KerasModelContainer):
                 
         out = Activation(activation=self.logits_activation, name='out')(logits)
 
-        self.model = Model(inputs=x, outputs=[out, reconstructed_input, distances_sum])
+        self.model = Model(inputs=x, outputs=[out, reconstructed_input, distances_sum, kernels])
                 
         super().build()
-
 
     def create_encoder(self, activation = 'linear', name='encoder', use_batch_norm=False):
         x = Input(shape=(self.n_frames_cnn, self.n_freq_cnn), dtype='float32', name='input')
@@ -189,7 +197,7 @@ class APNet(KerasModelContainer):
     def train(self, data_train, data_val, weights_path='./',
               optimizer='Adam', learning_rate=0.001, early_stopping=100,
               considered_improvement=0.01,
-              loss_weights=[10,5,5], sequence_time_sec=0.5,
+              loss_weights=[10,5,5, 2], sequence_time_sec=0.5,
               metric_resolution_sec=1.0, label_list=[],
               shuffle=True, init_last_layer=False,
               **kwargs_keras_fit):
@@ -202,13 +210,14 @@ class APNet(KerasModelContainer):
         losses = [
             'categorical_crossentropy',
             'mean_squared_error',
-            prototype_loss
+            prototype_loss,
+            separate_loss
         ]
 
         # get number of prototypes and freq dimension of feature space
         features_shape = self.model.get_layer('features').output.get_shape().as_list()
         n_freqs_autoencoder = features_shape[2]
-        prototypes_shape = self.model.get_layer('prototype_distances').output.get_shape().as_list()
+        prototypes_shape = self.model.get_layer('prototype_distances').get_output_at(0)[0].get_shape().as_list()
         n_prototypes = prototypes_shape[1]
 
         # Init last layer
@@ -223,7 +232,7 @@ class APNet(KerasModelContainer):
                 W[prototypes_per_class*(j+1):, j] = -1/float(prototypes_per_class)   
             W = W + 0.1*(np.random.rand(W.shape[0], W.shape[1]) - 0.5)
             self.model.get_layer('logits').set_weights([W]) 
-
+        print("training!")
         super().train(
             data_train, data_val,
             weights_path=weights_path, optimizer=optimizer,

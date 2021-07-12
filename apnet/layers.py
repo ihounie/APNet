@@ -42,7 +42,7 @@ class PrototypeLayer(Layer):
             kernel = K.l2_normalize(kernel, axis=axis)
             distance = - K.sum(x * kernel, axis=axis)    
           
-        return distance
+        return [distance, self.kernel]
     
     def get_config(self):
         config = {'n_prototypes': self.n_prototypes,
@@ -52,14 +52,13 @@ class PrototypeLayer(Layer):
         return dict(list(base_config.items()) + list(config.items()))    
     
     def compute_output_shape(self, input_shape):
-        
         if self.distance == 'euclidean_patches':
-            return (input_shape[0], self.n_prototypes,input_shape[1],input_shape[2])
+            return [(input_shape[0], self.n_prototypes,input_shape[1],input_shape[2]), (self.n_prototypes, input_shape[1],input_shape[2],input_shape[3])]
 
         if not self.use_weighted_sum:
-            return (input_shape[0], self.n_prototypes)
+            return [(input_shape[0], self.n_prototypes), (self.n_prototypes, input_shape[1],input_shape[2],input_shape[3])]
         else: 
-            return (input_shape[0], self.n_prototypes,input_shape[2])
+            return [(input_shape[0], self.n_prototypes,input_shape[2]), (self.n_prototypes, input_shape[1],input_shape[2],input_shape[3])]
 
 
 
