@@ -150,38 +150,7 @@ def main():
         shuffle=True, train=True, scaler=None,
         outputs=outputs
     )
-
-    # if args.dataset == 'GoogleSpeechCommands':
-    #     N_train = len(data_gen_train.audio_file_list)
-    #     print('len_data_train', N_train)
-    #     data_gen_train.audio_file_list = data_gen_train.audio_file_list[:int(N_train/10)]
-
-    # # Upsample the train set
-    # n_instances = np.zeros(len(dataset.label_list), dtype=int)
-    # files_by_class = {x: [] for x in range(len(dataset.label_list))}
-    # for j in range(len(data_gen_train.audio_file_list)):
-    #     file_name = data_gen_train.audio_file_list[j]['file_original']
-    #     annotations = dataset.get_annotations(file_name, np.zeros(1,), 0)
-    #     #print(annotations)
-    #     class_ix = np.argmax(annotations)
-    #     n_instances[class_ix] += 1
-    #     files_by_class[class_ix].append(data_gen_train.audio_file_list[j])
-    # print(n_instances)
-    # max_instances = np.amax(n_instances)
-
-    # print(len(data_gen_train.audio_file_list))
-    # for class_ix in range(len(dataset.label_list)):
-    #     if n_instances[class_ix] < max_instances:
-    #         new_instances = max_instances - n_instances[class_ix]
-    #         repetitions = int(new_instances/len(files_by_class[class_ix]))
-    #         print(new_instances, repetitions)
-    #         if repetitions > 1:
-    #             for j in range(repetitions):
-    #                 data_gen_train.audio_file_list.extend(files_by_class[class_ix])
-    #         else:
-    #             data_gen_train.audio_file_list.extend(files_by_class[class_ix][:new_instances])
-    # print(len(data_gen_train.audio_file_list))
-
+    
     if False:
         scaler = Scaler(normalizer=params_model['normalizer'])
 
@@ -261,7 +230,12 @@ def main():
     if args.dataset == 'UrbanSound8k':
         # Upload all data to RAM only for this dataset
         print('Getting data...')
+        #X_val, Y_val = data_gen_val.get_data_batch(0)
+        #print("X val batch len ", len(X_val))
+        #X_train, Y_train = data_gen_train.get_data_batch(0)
+        #print("X train batch len ", len(X_train))
         data_gen_train = data_gen_train.get_data()
+        data_gen_val = data_gen_val.get_data()
         print('Done!')
 
     # Train model

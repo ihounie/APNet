@@ -18,7 +18,7 @@
         "considered_improvement" : 0.0,
         "learning_rate" : 0.001,
         "batch_size" : 256,
-        "verbose" : 1,
+        "verbose" : 10,
         "optimizer" : "Adam"
     },
 
@@ -32,7 +32,7 @@
                 "n_prototypes" : 50
             },
             "train_arguments": {
-                "loss_weights" : [10,5,5],
+                "loss_weights" : [10,5,5,5],
                 "init_last_layer" : 1
             }          
         }

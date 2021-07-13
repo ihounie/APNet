@@ -262,7 +262,7 @@ class APNet(KerasModelContainer):
         feature_vectors, mask1, mask2 = self.model.get_layer('encoder')(x)
         deconv = self.model.get_layer('decoder')([feature_vectors, mask1, mask2])
         features = self.model.get_layer('features')(feature_vectors)  
-        prototype_distances = self.model.get_layer('prototype_distances')(feature_vectors) 
+        prototype_distances, _ = self.model.get_layer('prototype_distances')(feature_vectors) 
 
         prototype_similarity_local = self.model.get_layer('similarity_local')(prototype_distances)
 
@@ -401,7 +401,7 @@ class APNet(KerasModelContainer):
         feature_vectors, mask1, mask2 = self.model.get_layer('encoder')(x)
         deconv = self.model.get_layer('decoder')([feature_vectors, mask1, mask2])
         features = self.model.get_layer('features')(feature_vectors)  
-        prototype_distances = self.model.get_layer('prototype_distances')(feature_vectors) 
+        prototype_distances, _  = self.model.get_layer('prototype_distances')(feature_vectors) 
 
         prototype_similarity_local = self.model.get_layer('similarity_local')(prototype_distances)
 
